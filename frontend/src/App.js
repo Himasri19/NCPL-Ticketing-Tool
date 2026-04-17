@@ -1,54 +1,81 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Layout from "./components/Layout";
+import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
+import Dashboard from "./pages/Dashboard";
+import Tickets from "./pages/Tickets";
+import TicketDetail from "./pages/TicketDetail";
+import CreateTicket from "./pages/CreateTicket";
+import MyTickets from "./pages/MyTickets";
+import Employees from "./pages/Employees";
+import Departments from "./pages/Departments";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import { Toaster } from "sonner";
+import "./App.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+function RequireRole({ role, children }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (role && user.role !== role) return <Navigate to="/dashboard" replace />;
+  return children;
+}
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+function RootRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={user.role === "admin" ? "/dashboard" : "/my-tickets"} replace />;
+}
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+function AppRouter() {
+  const location = useLocation();
+  // Synchronous detection of session_id fragment (OAuth callback)
+  if (location.hash?.includes("session_id=")) {
+    return <AuthCallback />;
+  }
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route element={<Layout />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/tickets" element={<RequireRole role="admin"><Tickets /></RequireRole>} />
+        <Route path="/tickets/new" element={<CreateTicket />} />
+        <Route path="/tickets/:id" element={<TicketDetail />} />
+        <Route path="/my-tickets" element={<MyTickets />} />
+        <Route path="/employees" element={<RequireRole role="admin"><Employees /></RequireRole>} />
+        <Route path="/departments" element={<RequireRole role="admin"><Departments /></RequireRole>} />
+        <Route path="/reports" element={<RequireRole role="admin"><Reports /></RequireRole>} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
+      <Route path="/" element={<RootRedirect />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: "#FFFFFF",
+              border: "1px solid #E5E2DC",
+              color: "#1C1C1C",
+              fontFamily: "IBM Plex Sans",
+              fontSize: 13,
+            },
+          }}
+        />
+        <AppRouter />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
