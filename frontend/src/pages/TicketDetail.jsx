@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api, API } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
@@ -28,7 +28,7 @@ export default function TicketDetail() {
 
   const isAdmin = user?.role === "admin";
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const [t, c, a] = await Promise.all([
         api.get(`/tickets/${id}`),
@@ -44,13 +44,13 @@ export default function TicketDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     load();
     api.get("/employees/assignable").then((r) => setEmployees(r.data)).catch(() => {});
     api.get("/departments").then((r) => setDepartments(r.data)).catch(() => {});
-  }, [id]);
+  }, [id, load]);
 
   const addComment = async () => {
     if (!newComment.trim()) return;

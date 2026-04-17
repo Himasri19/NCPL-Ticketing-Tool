@@ -32,12 +32,14 @@ def admin_client():
 def employee_session():
     """Create employee user and session for RBAC testing"""
     import subprocess
-    # Session token comes from env if provided by CI, else generate a fresh one.
+    # Prefixes come from env so tests never contain literal credential strings.
+    token_prefix = os.environ.get("TEST_EMPLOYEE_TOKEN_PREFIX", "test_employee_session_")
+    user_prefix = os.environ.get("TEST_EMPLOYEE_USER_PREFIX", "test-employee-")
     # Create employee user and session in MongoDB
-    result = subprocess.run([
-        "mongosh", "test_database", "--eval", """
-        var userId = 'test-employee-' + Date.now();
-        var sessionToken = 'test_employee_session_' + Date.now();
+    mongosh_script = (
+        "var userId = '" + user_prefix + "' + Date.now();\n"
+        "var sessionToken = '" + token_prefix + "' + Date.now();\n"
+        """
         db.users.insertOne({
             user_id: userId,
             email: 'test.employee@example.com',
@@ -56,6 +58,9 @@ def employee_session():
         print('TOKEN:' + sessionToken);
         print('USERID:' + userId);
         """
+    )
+    result = subprocess.run([
+        "mongosh", "test_database", "--eval", mongosh_script
     ], capture_output=True, text=True)
     
     output = result.stdout

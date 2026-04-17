@@ -26,6 +26,17 @@ const STATUS_COLORS = {
   Closed: "#8C8C8C",
 };
 
+// Chart style constants — hoisted so recharts receives stable prop references
+const AXIS_TICK_SECONDARY = { fontSize: 11, fill: "#8C8C8C" };
+const AXIS_TICK_LABEL = { fontSize: 11, fill: "#595959" };
+const TOOLTIP_STYLE = {
+  background: "#FFFFFF",
+  border: "1px solid #E5E2DC",
+  borderRadius: 6,
+  fontSize: 12,
+};
+const TOOLTIP_CURSOR = { fill: "#FAF9F6" };
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
@@ -135,16 +146,9 @@ export default function Dashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="2 4" stroke="#E5E2DC" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#8C8C8C" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#8C8C8C" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{
-                    background: "#FFFFFF",
-                    border: "1px solid #E5E2DC",
-                    borderRadius: 6,
-                    fontSize: 12,
-                  }}
-                />
+                <XAxis dataKey="date" tick={AXIS_TICK_SECONDARY} axisLine={false} tickLine={false} />
+                <YAxis tick={AXIS_TICK_SECONDARY} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
                 <Area type="monotone" dataKey="count" stroke="#3A4B59" strokeWidth={2} fill="url(#gradBlue)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -160,9 +164,9 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.by_status} layout="vertical" margin={{ left: 8 }}>
                 <CartesianGrid strokeDasharray="2 4" stroke="#E5E2DC" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#8C8C8C" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <YAxis dataKey="status" type="category" tick={{ fontSize: 11, fill: "#595959" }} axisLine={false} tickLine={false} width={80} />
-                <Tooltip cursor={{ fill: "#FAF9F6" }} contentStyle={{ background: "#FFFFFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 }} />
+                <XAxis type="number" tick={AXIS_TICK_SECONDARY} axisLine={false} tickLine={false} allowDecimals={false} />
+                <YAxis dataKey="status" type="category" tick={AXIS_TICK_LABEL} axisLine={false} tickLine={false} width={80} />
+                <Tooltip cursor={TOOLTIP_CURSOR} contentStyle={TOOLTIP_STYLE} />
                 <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                   {stats.by_status.map((entry) => (
                     <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || "#3A4B59"} />

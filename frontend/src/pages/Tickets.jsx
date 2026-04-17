@@ -19,13 +19,13 @@ export default function Tickets({ employeeView = false }) {
 
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
-  const filters = {
+  const filters = useMemo(() => ({
     scope: params.get("scope") || "",
     status: params.get("status") || "",
     department: params.get("department") || "",
     priority: params.get("priority") || "",
     q: params.get("q") || "",
-  };
+  }), [params]);
 
   useEffect(() => {
     (async () => {
@@ -48,7 +48,7 @@ export default function Tickets({ employeeView = false }) {
         setLoading(false);
       }
     })();
-  }, [location.search, employeeView]);
+  }, [filters, employeeView]);
 
   const title = useMemo(() => {
     if (employeeView) {

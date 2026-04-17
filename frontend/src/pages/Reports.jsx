@@ -10,6 +10,13 @@ const DEPT_COLORS = ["#3A4B59", "#4A90E2", "#5CB85C", "#E6A23C", "#D9534F", "#8C
 const STATUS_COLORS = { Open: "#4A90E2", "In Progress": "#4A90E2", Pending: "#E6A23C", Resolved: "#5CB85C", Closed: "#8C8C8C" };
 const PRIO_COLORS = { Low: "#5CB85C", Medium: "#4A90E2", High: "#E6A23C", Urgent: "#D9534F" };
 
+// Hoisted chart style constants
+const TICK_LABEL = { fontSize: 11, fill: "#595959" };
+const TICK_SECONDARY = { fontSize: 11, fill: "#8C8C8C" };
+const TOOLTIP_STYLE = { background: "#FFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 };
+const LEGEND_STYLE = { fontSize: 11 };
+const PIE_CHART_MARGIN = { left: 10 };
+
 export default function Reports() {
   const [stats, setStats] = useState(null);
 
@@ -47,9 +54,9 @@ export default function Reports() {
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={stats.by_department}>
               <CartesianGrid strokeDasharray="2 4" stroke="#E5E2DC" vertical={false} />
-              <XAxis dataKey="department" tick={{ fontSize: 11, fill: "#595959" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#8C8C8C" }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "#FFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 }} />
+              <XAxis dataKey="department" tick={TICK_LABEL} axisLine={false} tickLine={false} />
+              <YAxis tick={TICK_SECONDARY} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} />
               <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                 {stats.by_department.map((entry, i) => <Cell key={entry.department} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />)}
               </Bar>
@@ -74,19 +81,19 @@ export default function Reports() {
                   <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || "#3A4B59"} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ background: "#FFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 }} />
-              <Legend iconType="square" wrapperStyle={{ fontSize: 11 }} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} />
+              <Legend iconType="square" wrapperStyle={LEGEND_STYLE} />
             </PieChart>
           </ResponsiveContainer>
         </Chart>
 
         <Chart title="Priority Mix">
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={stats.by_priority} layout="vertical" margin={{ left: 10 }}>
+            <BarChart data={stats.by_priority} layout="vertical" margin={PIE_CHART_MARGIN}>
               <CartesianGrid strokeDasharray="2 4" stroke="#E5E2DC" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 11, fill: "#8C8C8C" }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <YAxis dataKey="priority" type="category" tick={{ fontSize: 11, fill: "#595959" }} axisLine={false} tickLine={false} width={70} />
-              <Tooltip contentStyle={{ background: "#FFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 }} />
+              <XAxis type="number" tick={TICK_SECONDARY} axisLine={false} tickLine={false} allowDecimals={false} />
+              <YAxis dataKey="priority" type="category" tick={TICK_LABEL} axisLine={false} tickLine={false} width={70} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                 {stats.by_priority.map((entry) => <Cell key={entry.priority} fill={PRIO_COLORS[entry.priority] || "#3A4B59"} />)}
               </Bar>
@@ -104,9 +111,9 @@ export default function Reports() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="2 4" stroke="#E5E2DC" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#8C8C8C" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#8C8C8C" }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "#FFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 }} />
+              <XAxis dataKey="date" tick={TICK_SECONDARY} axisLine={false} tickLine={false} />
+              <YAxis tick={TICK_SECONDARY} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} />
               <Area type="monotone" dataKey="count" stroke="#3A4B59" strokeWidth={2} fill="url(#gradTrend)" />
             </AreaChart>
           </ResponsiveContainer>
