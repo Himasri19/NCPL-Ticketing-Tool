@@ -92,8 +92,13 @@ frontend/node_modules/.cache/default-development/3.pack
 .env
 .env.*
 *.env
+# But keep example templates
+!.env.example
+!backend/.env.example
+!frontend/.env.example
 credentials.json
 *.pem
 *.key
 .credentials
 frontend/node_modules/.cache/default-development/5.pack
+frontend/node_modules/.cache/default-development/6.pack

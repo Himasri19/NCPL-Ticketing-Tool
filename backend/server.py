@@ -892,11 +892,26 @@ async def root():
 
 app.include_router(api)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_origin_regex=".*",
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Production-ready CORS:
+# - If CORS_ORIGINS is set to explicit origins (comma-separated), those are used (required when cookies are sent).
+# - Otherwise falls back to allow_origin_regex for preview envs.
+_cors_origins_env = os.environ.get("CORS_ORIGINS", "").strip()
+_explicit_origins = [o.strip() for o in _cors_origins_env.split(",") if o.strip() and o.strip() != "*"]
+
+if _explicit_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=_explicit_origins,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Dev/preview: accept any origin but still allow credentials via regex match.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origin_regex=".*",
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )

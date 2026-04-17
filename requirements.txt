@@ -1,0 +1,14 @@
+# Root-level requirements.txt — used by Vercel's @vercel/python runtime
+# when deploying the backend as a serverless function via /api/index.py.
+# Keep in sync with backend/requirements.txt (minus dev-only deps).
+
+fastapi==0.110.1
+pydantic>=2.6.4
+email-validator>=2.2.0
+motor==3.3.1
+pymongo==4.5.0
+python-dotenv>=1.0.1
+requests>=2.31.0
+python-multipart>=0.0.9
+mangum>=0.17.0
+tzdata>=2024.2
