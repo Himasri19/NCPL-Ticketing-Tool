@@ -5,6 +5,7 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import CreateTicket from "./pages/CreateTicket";
@@ -28,7 +29,13 @@ function RootRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
-  return <Navigate to={user.role === "admin" ? "/dashboard" : "/my-tickets"} replace />;
+  return <Navigate to="/dashboard" replace />;
+}
+
+function RoleDashboard() {
+  const { user } = useAuth();
+  if (!user) return null;
+  return user.role === "admin" ? <Dashboard /> : <EmployeeDashboard />;
 }
 
 function AppRouter() {
@@ -42,7 +49,7 @@ function AppRouter() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<Layout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<RoleDashboard />} />
         <Route path="/tickets" element={<RequireRole role="admin"><Tickets /></RequireRole>} />
         <Route path="/tickets/new" element={<CreateTicket />} />
         <Route path="/tickets/:id" element={<TicketDetail />} />

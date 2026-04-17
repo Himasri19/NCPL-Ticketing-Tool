@@ -298,6 +298,51 @@ async def logout(request: Request, response: Response):
     return {"ok": True}
 
 
+@api.post("/auth/preview-employee")
+async def preview_employee(request: Request, response: Response):
+    """Admin-only: swap current session for a seeded demo employee session so
+    the admin can preview the Employee Portal without logging out.
+    """
+    await require_admin(request)
+
+    demo_email = "demo.employee@ncpl.preview"
+    demo = await db.users.find_one({"email": demo_email}, {"_id": 0})
+    if not demo:
+        demo = {
+            "user_id": f"user_{uuid.uuid4().hex[:12]}",
+            "email": demo_email,
+            "name": "Demo Employee",
+            "picture": None,
+            "role": "employee",
+            "department": "HR",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.users.insert_one(demo)
+        demo.pop("_id", None)
+
+    # Create a preview session token
+    preview_token = f"preview_emp_{uuid.uuid4().hex}"
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=2)
+    await db.user_sessions.insert_one({
+        "session_token": preview_token,
+        "user_id": demo["user_id"],
+        "expires_at": expires_at.isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "is_preview": True,
+    })
+
+    response.set_cookie(
+        key="session_token",
+        value=preview_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=2 * 60 * 60,
+    )
+    return {"user": demo, "preview": True}
+
+
 # ---------- Departments ----------
 @api.get("/departments", response_model=List[DepartmentOut])
 async def list_departments(request: Request):

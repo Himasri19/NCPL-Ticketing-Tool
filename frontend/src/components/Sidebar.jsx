@@ -1,6 +1,8 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../lib/api";
+import { toast } from "sonner";
 import {
   House,
   ListChecks,
@@ -27,6 +29,7 @@ import {
   Handshake,
   Coin,
   Star,
+  Eye,
 } from "@phosphor-icons/react";
 
 const DEPT_ICONS = {
@@ -39,9 +42,25 @@ const DEPT_ICONS = {
 };
 
 export default function Sidebar({ counts = {}, departments = [] }) {
-  const { user, logout } = useAuth();
+  const { user, logout, refresh } = useAuth();
   const location = useLocation();
   const isAdmin = user?.role === "admin";
+  const [previewing, setPreviewing] = useState(false);
+
+  const previewAsEmployee = async () => {
+    if (!window.confirm("Preview the Employee Portal? You'll be switched to a demo employee session for 2 hours. Sign out to return to admin.")) return;
+    setPreviewing(true);
+    try {
+      await api.post("/auth/preview-employee");
+      toast.success("Switched to Employee Portal");
+      await refresh();
+      window.location.href = "/dashboard";
+    } catch (e) {
+      toast.error("Failed to start preview");
+    } finally {
+      setPreviewing(false);
+    }
+  };
 
   const adminNav = useMemo(
     () => [
@@ -82,16 +101,44 @@ export default function Sidebar({ counts = {}, departments = [] }) {
 
   const employeeNav = useMemo(
     () => [
+      { section: "Overview" },
+      { to: "/dashboard", label: "Dashboard", icon: House, testid: "nav-emp-dashboard" },
+      { to: "/tickets/new", label: "Create Ticket", icon: Plus, testid: "nav-emp-create" },
+
       { section: "My Tickets" },
+      { to: "/my-tickets", label: "All", icon: ListChecks, testid: "nav-my-all" },
       { to: "/my-tickets?scope=active", label: "Active", icon: PaperPlaneTilt, testid: "nav-my-active" },
       { to: "/my-tickets?scope=resolved", label: "Resolved", icon: CheckCircle, testid: "nav-my-resolved" },
       { to: "/my-tickets?scope=closed", label: "Closed", icon: XCircle, testid: "nav-my-closed" },
+
+      { section: "Account" },
+      { to: "/settings", label: "Profile", icon: GearSix, testid: "nav-emp-settings" },
     ],
     [],
   );
 
   const items = isAdmin ? adminNav : employeeNav;
-  const ctaTo = isAdmin ? "/tickets/new" : "/tickets/new";
+
+  // Theme per portal
+  const theme = isAdmin
+    ? {
+        headerBg: "var(--brand-primary)",
+        headerFg: "#FAF9F6",
+        ctaBg: "var(--brand-primary)",
+        ctaBgHover: "var(--brand-primary-hover)",
+        portalLabel: "Admin Console",
+        portalAccent: "var(--brand-primary)",
+        tagBg: "#1C1C1C",
+      }
+    : {
+        headerBg: "#B8722D",
+        headerFg: "#FAF9F6",
+        ctaBg: "#B8722D",
+        ctaBgHover: "#9A5D21",
+        portalLabel: "Employee Portal",
+        portalAccent: "#B8722D",
+        tagBg: "#8B6A1E",
+      };
 
   return (
     <aside
@@ -99,29 +146,38 @@ export default function Sidebar({ counts = {}, departments = [] }) {
       style={{ background: "var(--surface-sidebar)", borderRight: "1px solid var(--border-subtle)" }}
       data-testid="sidebar"
     >
-      {/* Brand */}
-      <div className="px-4 py-4 flex items-center gap-2" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            border: "1.5px solid var(--text-primary)",
-            borderRadius: 6,
-            display: "grid",
-            placeItems: "center",
-            fontFamily: "Cabinet Grotesk",
-            fontWeight: 700,
-            fontSize: 14,
-          }}
-        >
-          &amp;
-        </div>
-        <div>
-          <div style={{ fontFamily: "Cabinet Grotesk", fontWeight: 600, fontSize: 14, letterSpacing: "-0.01em" }}>
-            NCPL · Ticketing
+      {/* Brand header — strong portal identity */}
+      <div
+        className="px-4 py-4"
+        style={{
+          background: theme.headerBg,
+          color: theme.headerFg,
+          borderBottom: "1px solid var(--border-subtle)",
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              border: `1.5px solid ${theme.headerFg}`,
+              borderRadius: 6,
+              display: "grid",
+              placeItems: "center",
+              fontFamily: "Cabinet Grotesk",
+              fontWeight: 700,
+              fontSize: 14,
+            }}
+          >
+            &amp;
           </div>
-          <div className="mono-label" style={{ fontSize: 9.5, marginTop: 1 }}>
-            {isAdmin ? "Admin Console" : "Employee Portal"}
+          <div>
+            <div style={{ fontFamily: "Cabinet Grotesk", fontWeight: 600, fontSize: 14, letterSpacing: "-0.01em" }}>
+              NCPL · Ticketing
+            </div>
+            <div className="mono-label" style={{ fontSize: 9.5, marginTop: 1, color: theme.headerFg, opacity: 0.85 }}>
+              {theme.portalLabel}
+            </div>
           </div>
         </div>
       </div>
@@ -129,13 +185,22 @@ export default function Sidebar({ counts = {}, departments = [] }) {
       {/* CTA */}
       <div className="px-3 pt-3">
         <NavLink
-          to={ctaTo}
+          to="/tickets/new"
           data-testid="create-ticket-cta"
-          className="w-full flex items-center justify-center gap-2 btn-primary"
-          style={{ padding: "9px 12px" }}
+          className="w-full flex items-center justify-center gap-2 transition-colors"
+          style={{
+            background: theme.ctaBg,
+            color: "#FAF9F6",
+            padding: "9px 12px",
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: 500,
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = theme.ctaBgHover)}
+          onMouseLeave={(e) => (e.currentTarget.style.background = theme.ctaBg)}
         >
           <Plus size={14} weight="bold" />
-          New Ticket
+          {isAdmin ? "New Ticket" : "Raise a Ticket"}
         </NavLink>
       </div>
 
@@ -156,21 +221,50 @@ export default function Sidebar({ counts = {}, departments = [] }) {
             (location.pathname === to.split("?")[0] &&
               !to.includes("?") &&
               !location.search);
+          const activeStyle = isActive
+            ? { background: theme.portalAccent, color: "#FAF9F6" }
+            : {};
           return (
             <NavLink
               key={to}
               to={to}
               data-testid={item.testid}
-              className={`sidebar-item ${isActive ? "active" : ""}`}
+              className="sidebar-item"
+              style={activeStyle}
             >
               <Icon size={15} weight="duotone" />
               <span>{item.label}</span>
               {item.count !== undefined && item.count !== null && (
-                <span className="sidebar-count">{item.count}</span>
+                <span className="sidebar-count" style={isActive ? { color: "#FAF9F6", opacity: 0.85 } : {}}>
+                  {item.count}
+                </span>
               )}
             </NavLink>
           );
         })}
+
+        {/* Admin only: Preview employee */}
+        {isAdmin && (
+          <div className="px-3 pt-4 pb-2 mt-2" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+            <button
+              onClick={previewAsEmployee}
+              disabled={previewing}
+              className="w-full flex items-center justify-center gap-1.5 text-xs py-2 rounded-md transition-colors"
+              style={{
+                background: "var(--surface-hover)",
+                color: "var(--text-secondary)",
+                fontFamily: "IBM Plex Mono",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                fontSize: 10,
+              }}
+              data-testid="preview-employee-button"
+            >
+              <Eye size={12} />
+              {previewing ? "Switching…" : "Preview as Employee"}
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Footer: profile */}
@@ -180,7 +274,7 @@ export default function Sidebar({ counts = {}, departments = [] }) {
       >
         <div
           className="rounded-full overflow-hidden flex-shrink-0"
-          style={{ width: 32, height: 32, background: "var(--brand-primary)" }}
+          style={{ width: 32, height: 32, background: theme.portalAccent }}
         >
           {user?.picture ? (
             <img src={user.picture} alt="" className="w-full h-full object-cover" />
