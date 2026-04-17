@@ -81,11 +81,22 @@ export default function EmployeeDashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {kpis.map((k) => (
-          <div key={k.label} className="stat-card" data-testid={`emp-kpi-${k.label.toLowerCase().replace(/\s+/g, "-")}`}>
-            <div className="mono-label">{k.label}</div>
+          <div
+            key={k.label}
+            className="stat-card"
+            style={k.highlight ? { background: "#FDF6EC", borderColor: "#E8D5A8" } : {}}
+            data-testid={`emp-kpi-${k.label.toLowerCase().replace(/\s+/g, "-")}`}
+          >
+            <div className="mono-label" style={k.highlight ? { color: "#8B6A1E" } : {}}>
+              {k.label}
+            </div>
             <div
               className="mt-2 text-3xl font-semibold"
-              style={{ fontFamily: "Cabinet Grotesk", letterSpacing: "-0.02em" }}
+              style={{
+                fontFamily: "Cabinet Grotesk",
+                letterSpacing: "-0.02em",
+                color: k.highlight ? "#B8722D" : "var(--text-primary)",
+              }}
             >
               {k.value}
             </div>
@@ -99,6 +110,14 @@ export default function EmployeeDashboard() {
       {/* Quick links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <QuickCard
+          to="/my-tickets?scope=assigned_to_me"
+          title="Work on Assigned"
+          hint="Tickets you need to handle"
+          count={stats.assigned_to_me || 0}
+          testid="qc-assigned"
+          accent
+        />
+        <QuickCard
           to="/my-tickets?scope=active"
           title="Track Active"
           hint="See what's in motion"
@@ -111,14 +130,6 @@ export default function EmployeeDashboard() {
           hint="Awaiting your closure"
           count={stats.resolved}
           testid="qc-resolved"
-          accent
-        />
-        <QuickCard
-          to="/my-tickets?scope=closed"
-          title="Archive"
-          hint="Your closed requests"
-          count={stats.closed}
-          testid="qc-closed"
         />
       </div>
 

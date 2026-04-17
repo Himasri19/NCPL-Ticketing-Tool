@@ -482,8 +482,11 @@ async def list_tickets(
     query: dict = {}
 
     if user["role"] != "admin":
-        # Employees only see their own tickets
-        query["created_by"] = user["user_id"]
+        # Employees see tickets they created OR were assigned to them
+        query["$or"] = [
+            {"created_by": user["user_id"]},
+            {"assignee_id": user["user_id"]},
+        ]
 
     if status:
         query["status"] = status
@@ -496,10 +499,17 @@ async def list_tickets(
 
     if scope:
         if scope == "mine":
+            # override "own OR assigned" with strict "created by me"
+            query.pop("$or", None)
             query["created_by"] = user["user_id"]
         elif scope == "unassigned":
+            query.pop("$or", None)
+            if user["role"] != "admin":
+                # employees can't see arbitrary unassigned tickets
+                query["created_by"] = user["user_id"]
             query["assignee_id"] = None
         elif scope == "assigned_to_me":
+            query.pop("$or", None)
             query["assignee_id"] = user["user_id"]
         elif scope == "escalated":
             query["is_escalated"] = True
@@ -517,11 +527,17 @@ async def list_tickets(
             query["status"] = {"$nin": ["Resolved", "Closed"]}
 
     if q:
-        query["$or"] = [
+        # If there is already an $or (visibility), combine using $and
+        q_or = [
             {"title": {"$regex": q, "$options": "i"}},
             {"description": {"$regex": q, "$options": "i"}},
             {"code": {"$regex": q, "$options": "i"}},
         ]
+        if "$or" in query:
+            existing_or = query.pop("$or")
+            query["$and"] = [{"$or": existing_or}, {"$or": q_or}]
+        else:
+            query["$or"] = q_or
 
     rows = await db.tickets.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     out = []
@@ -537,7 +553,7 @@ async def get_ticket(ticket_id: str, request: Request):
     t = await db.tickets.find_one({"id": ticket_id}, {"_id": 0})
     if not t:
         raise HTTPException(status_code=404, detail="Not found")
-    if user["role"] != "admin" and t["created_by"] != user["user_id"]:
+    if user["role"] != "admin" and t["created_by"] != user["user_id"] and t.get("assignee_id") != user["user_id"]:
         raise HTTPException(status_code=403, detail="Forbidden")
     t = await _enrich_ticket(t)
     return TicketOut(**t)
@@ -549,20 +565,26 @@ async def update_ticket(ticket_id: str, body: TicketUpdate, request: Request):
     t = await db.tickets.find_one({"id": ticket_id}, {"_id": 0})
     if not t:
         raise HTTPException(status_code=404, detail="Not found")
-    if user["role"] != "admin" and t["created_by"] != user["user_id"]:
+    if user["role"] != "admin" and t["created_by"] != user["user_id"] and t.get("assignee_id") != user["user_id"]:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     update = {k: v for k, v in body.model_dump().items() if v is not None}
 
     if user["role"] != "admin":
-        # Employees can only update title/description of own ticket while Open, and close it
+        is_creator = t["created_by"] == user["user_id"]
+        is_assignee = t.get("assignee_id") == user["user_id"]
         allowed = {}
-        if "status" in update and update["status"] == "Closed" and t["status"] == "Resolved":
+        # Creator can close a Resolved ticket
+        if is_creator and "status" in update and update["status"] == "Closed" and t["status"] == "Resolved":
             allowed["status"] = "Closed"
-        if t["status"] == "Open":
+        # Creator can edit title/description while Open
+        if is_creator and t["status"] == "Open":
             for k in ("title", "description"):
                 if k in update:
                     allowed[k] = update[k]
+        # Assignee can move status through the working lifecycle (Open → In Progress → Pending → Resolved)
+        if is_assignee and "status" in update and update["status"] in ("Open", "In Progress", "Pending", "Resolved"):
+            allowed["status"] = update["status"]
         update = allowed
         if not update:
             raise HTTPException(status_code=403, detail="Not allowed")
@@ -614,8 +636,13 @@ async def change_status(ticket_id: str, body: StatusIn, request: Request):
     if not t:
         raise HTTPException(status_code=404, detail="Not found")
     if user["role"] != "admin":
-        # Employees can only close own resolved tickets
-        if t["created_by"] != user["user_id"] or not (t["status"] == "Resolved" and body.status == "Closed"):
+        is_creator = t["created_by"] == user["user_id"]
+        is_assignee = t.get("assignee_id") == user["user_id"]
+        # Creator can close a Resolved ticket
+        creator_can_close = is_creator and t["status"] == "Resolved" and body.status == "Closed"
+        # Assignee can move through working statuses
+        assignee_can_change = is_assignee and body.status in ("Open", "In Progress", "Pending", "Resolved")
+        if not (creator_can_close or assignee_can_change):
             raise HTTPException(status_code=403, detail="Forbidden")
     await db.tickets.update_one(
         {"id": ticket_id},
@@ -647,7 +674,7 @@ async def list_comments(ticket_id: str, request: Request):
     t = await db.tickets.find_one({"id": ticket_id}, {"_id": 0})
     if not t:
         raise HTTPException(status_code=404, detail="Not found")
-    if user["role"] != "admin" and t["created_by"] != user["user_id"]:
+    if user["role"] != "admin" and t["created_by"] != user["user_id"] and t.get("assignee_id") != user["user_id"]:
         raise HTTPException(status_code=403, detail="Forbidden")
     query = {"ticket_id": ticket_id}
     if user["role"] != "admin":
@@ -662,7 +689,7 @@ async def add_comment(ticket_id: str, body: CommentIn, request: Request):
     t = await db.tickets.find_one({"id": ticket_id}, {"_id": 0})
     if not t:
         raise HTTPException(status_code=404, detail="Not found")
-    if user["role"] != "admin" and t["created_by"] != user["user_id"]:
+    if user["role"] != "admin" and t["created_by"] != user["user_id"] and t.get("assignee_id") != user["user_id"]:
         raise HTTPException(status_code=403, detail="Forbidden")
     doc = {
         "id": f"cm_{uuid.uuid4().hex[:12]}",
@@ -690,7 +717,7 @@ async def upload_attachment(ticket_id: str, request: Request, file: UploadFile =
     t = await db.tickets.find_one({"id": ticket_id}, {"_id": 0})
     if not t:
         raise HTTPException(status_code=404, detail="Not found")
-    if user["role"] != "admin" and t["created_by"] != user["user_id"]:
+    if user["role"] != "admin" and t["created_by"] != user["user_id"] and t.get("assignee_id") != user["user_id"]:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     ext = file.filename.split(".")[-1].lower() if "." in file.filename else "bin"
@@ -723,7 +750,7 @@ async def list_attachments(ticket_id: str, request: Request):
     t = await db.tickets.find_one({"id": ticket_id}, {"_id": 0})
     if not t:
         raise HTTPException(status_code=404, detail="Not found")
-    if user["role"] != "admin" and t["created_by"] != user["user_id"]:
+    if user["role"] != "admin" and t["created_by"] != user["user_id"] and t.get("assignee_id") != user["user_id"]:
         raise HTTPException(status_code=403, detail="Forbidden")
     rows = await db.attachments.find({"ticket_id": ticket_id, "is_deleted": False}, {"_id": 0}).to_list(500)
     return rows
@@ -742,7 +769,7 @@ async def download_attachment(attachment_id: str, request: Request, auth: Option
     t = await db.tickets.find_one({"id": att["ticket_id"]}, {"_id": 0})
     if not t:
         raise HTTPException(status_code=404, detail="Ticket not found")
-    if user["role"] != "admin" and t["created_by"] != user["user_id"]:
+    if user["role"] != "admin" and t["created_by"] != user["user_id"] and t.get("assignee_id") != user["user_id"]:
         raise HTTPException(status_code=403, detail="Forbidden")
     data, ctype = get_object(att["storage_path"])
     return FastAPIResponse(
@@ -756,33 +783,50 @@ async def download_attachment(attachment_id: str, request: Request, auth: Option
 @api.get("/dashboard/stats")
 async def dashboard_stats(request: Request):
     user = await get_current_user(request)
-    scope = {} if user["role"] == "admin" else {"created_by": user["user_id"]}
+    # Employees: include tickets they created OR are assigned to
+    if user["role"] == "admin":
+        scope: dict = {}
+    else:
+        scope = {"$or": [{"created_by": user["user_id"]}, {"assignee_id": user["user_id"]}]}
+
+    def _and(extra: dict) -> dict:
+        """Compose scope ($or visibility) with extra filters using $and when needed."""
+        if not scope:
+            return extra
+        if not extra:
+            return dict(scope)
+        return {"$and": [scope, extra]}
 
     total = await db.tickets.count_documents(scope)
-    active = await db.tickets.count_documents({**scope, "status": {"$in": ["Open", "In Progress", "Pending"]}})
-    unassigned = await db.tickets.count_documents({**scope, "assignee_id": None, "status": {"$nin": ["Resolved", "Closed"]}})
-    resolved = await db.tickets.count_documents({**scope, "status": "Resolved"})
-    closed = await db.tickets.count_documents({**scope, "status": "Closed"})
-    high = await db.tickets.count_documents({**scope, "priority": {"$in": ["High", "Urgent"]}, "status": {"$nin": ["Resolved", "Closed"]}})
-    escalated = await db.tickets.count_documents({**scope, "is_escalated": True})
+    active = await db.tickets.count_documents(_and({"status": {"$in": ["Open", "In Progress", "Pending"]}}))
+    unassigned = await db.tickets.count_documents(_and({"assignee_id": None, "status": {"$nin": ["Resolved", "Closed"]}}))
+    resolved = await db.tickets.count_documents(_and({"status": "Resolved"}))
+    closed = await db.tickets.count_documents(_and({"status": "Closed"}))
+    high = await db.tickets.count_documents(_and({"priority": {"$in": ["High", "Urgent"]}, "status": {"$nin": ["Resolved", "Closed"]}}))
+    escalated = await db.tickets.count_documents(_and({"is_escalated": True}))
+    # Count of tickets specifically assigned to current user (useful for employees)
+    assigned_to_me = await db.tickets.count_documents({
+        "assignee_id": user["user_id"],
+        "status": {"$nin": ["Resolved", "Closed"]},
+    })
 
     # by status
     by_status = []
     for s in TICKET_STATUSES:
-        c = await db.tickets.count_documents({**scope, "status": s})
+        c = await db.tickets.count_documents(_and({"status": s}))
         by_status.append({"status": s, "count": c})
 
     # by department
     by_dept = []
     depts = await db.departments.find({}, {"_id": 0}).to_list(100)
     for d in depts:
-        c = await db.tickets.count_documents({**scope, "department": d["name"]})
+        c = await db.tickets.count_documents(_and({"department": d["name"]}))
         by_dept.append({"department": d["name"], "count": c})
 
     # by priority
     by_priority = []
     for p in TICKET_PRIORITIES:
-        c = await db.tickets.count_documents({**scope, "priority": p})
+        c = await db.tickets.count_documents(_and({"priority": p}))
         by_priority.append({"priority": p, "count": c})
 
     # last 7 days created
@@ -791,10 +835,9 @@ async def dashboard_stats(request: Request):
     for i in range(6, -1, -1):
         day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day_start + timedelta(days=1)
-        c = await db.tickets.count_documents({
-            **scope,
+        c = await db.tickets.count_documents(_and({
             "created_at": {"$gte": day_start.isoformat(), "$lt": day_end.isoformat()},
-        })
+        }))
         trend.append({"date": day_start.strftime("%b %d"), "count": c})
 
     return {
@@ -805,6 +848,7 @@ async def dashboard_stats(request: Request):
         "closed": closed,
         "high_priority": high,
         "escalated": escalated,
+        "assigned_to_me": assigned_to_me,
         "by_status": by_status,
         "by_department": by_dept,
         "by_priority": by_priority,

@@ -35,7 +35,7 @@ export default function Tickets({ employeeView = false }) {
         Object.entries(filters).forEach(([k, v]) => {
           if (v) q[k] = v;
         });
-        if (employeeView && !q.scope) q.scope = "mine";
+        // For employees: default to "all visible" (own + assigned). Only force scope when explicit.
         const [t, d] = await Promise.all([
           api.get("/tickets", { params: q }),
           api.get("/departments"),
@@ -55,6 +55,7 @@ export default function Tickets({ employeeView = false }) {
       if (filters.scope === "resolved") return "Resolved Tickets";
       if (filters.scope === "closed") return "Closed Tickets";
       if (filters.scope === "active") return "Active Tickets";
+      if (filters.scope === "assigned_to_me") return "Assigned to Me";
       return "My Tickets";
     }
     if (filters.scope === "unassigned") return "Unassigned Tickets";

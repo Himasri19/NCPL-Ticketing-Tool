@@ -111,10 +111,13 @@ export default function Sidebar({ counts = {}, departments = [] }) {
       { to: "/my-tickets?scope=resolved", label: "Resolved", icon: CheckCircle, testid: "nav-my-resolved" },
       { to: "/my-tickets?scope=closed", label: "Closed", icon: XCircle, testid: "nav-my-closed" },
 
+      { section: "Assigned Work" },
+      { to: "/my-tickets?scope=assigned_to_me", label: "Assigned to Me", icon: UserCircleGear, count: counts.assigned_to_me, testid: "nav-emp-assigned-me" },
+
       { section: "Account" },
       { to: "/settings", label: "Profile", icon: GearSix, testid: "nav-emp-settings" },
     ],
-    [],
+    [counts],
   );
 
   const items = isAdmin ? adminNav : employeeNav;

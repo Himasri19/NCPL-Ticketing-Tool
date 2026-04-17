@@ -139,6 +139,8 @@ export default function TicketDetail() {
   }
 
   const canEmployeeClose = !isAdmin && ticket.status === "Resolved" && ticket.created_by === user.user_id;
+  const isAssignee = !isAdmin && ticket.assignee_id === user.user_id;
+  const employeeWorkableStatuses = ["Open", "In Progress", "Pending", "Resolved"];
 
   return (
     <div className="p-6 md:p-8 max-w-[1400px]" data-testid="ticket-detail-page">
@@ -170,6 +172,15 @@ export default function TicketDetail() {
           <button onClick={() => changeStatus("Closed")} className="btn-primary flex items-center gap-1.5" data-testid="close-ticket-button">
             <CheckCircle size={14} /> Confirm &amp; Close
           </button>
+        )}
+        {isAssignee && (
+          <div
+            className="px-3 py-1.5 rounded-md text-xs font-medium"
+            style={{ background: "#FDF6EC", color: "#8B6A1E", border: "1px solid #E8D5A8" }}
+            data-testid="assigned-to-you-badge"
+          >
+            Assigned to you
+          </div>
         )}
       </div>
 
@@ -295,7 +306,7 @@ export default function TicketDetail() {
             <div className="mono-label mb-3">Details</div>
             <div className="space-y-3 text-sm">
               <Field label="Status">
-                {isAdmin ? (
+                {isAdmin || isAssignee ? (
                   <select
                     className="input-plain"
                     style={{ padding: "6px 10px" }}
@@ -303,7 +314,9 @@ export default function TicketDetail() {
                     onChange={(e) => changeStatus(e.target.value)}
                     data-testid="status-select"
                   >
-                    {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    {(isAdmin ? STATUSES : employeeWorkableStatuses).map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
                   </select>
                 ) : (
                   <StatusBadge status={ticket.status} />
@@ -381,7 +394,7 @@ export default function TicketDetail() {
             )}
           </div>
 
-          {isAdmin && (
+          {(isAdmin || isAssignee) && (
             <div className="card-flat p-5">
               <div className="mono-label mb-3">Quick Actions</div>
               <div className="space-y-2">
