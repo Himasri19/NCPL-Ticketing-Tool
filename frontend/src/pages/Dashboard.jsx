@@ -164,8 +164,8 @@ export default function Dashboard() {
                 <YAxis dataKey="status" type="category" tick={{ fontSize: 11, fill: "#595959" }} axisLine={false} tickLine={false} width={80} />
                 <Tooltip cursor={{ fill: "#FAF9F6" }} contentStyle={{ background: "#FFFFFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 }} />
                 <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                  {stats.by_status.map((entry, i) => (
-                    <Cell key={i} fill={STATUS_COLORS[entry.status] || "#3A4B59"} />
+                  {stats.by_status.map((entry) => (
+                    <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || "#3A4B59"} />
                   ))}
                 </Bar>
               </BarChart>

@@ -34,7 +34,8 @@ export function AuthProvider({ children }) {
     try {
       await api.post("/auth/logout");
     } catch (e) {
-      // ignore
+      // Logout should always proceed locally even if server call fails.
+      console.warn("Server logout failed; clearing local session anyway", e);
     }
     setUser(null);
     window.location.href = "/login";

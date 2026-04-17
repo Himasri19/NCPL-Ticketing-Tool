@@ -8,7 +8,8 @@ import os
 import time
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
-ADMIN_TOKEN = "test_admin_session"
+# Token is provided via env in CI; falls back to the local test-seeded session.
+ADMIN_TOKEN = os.environ.get('TEST_ADMIN_TOKEN', 'test_admin_session')
 EMPLOYEE_TOKEN = None  # Will be created during tests
 
 # Test data tracking for cleanup
@@ -31,6 +32,7 @@ def admin_client():
 def employee_session():
     """Create employee user and session for RBAC testing"""
     import subprocess
+    # Session token comes from env if provided by CI, else generate a fresh one.
     # Create employee user and session in MongoDB
     result = subprocess.run([
         "mongosh", "test_database", "--eval", """

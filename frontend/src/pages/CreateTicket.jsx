@@ -134,8 +134,8 @@ export default function CreateTicket() {
           />
           {files.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
-              {files.map((f, i) => (
-                <span key={i} className="badge-status" style={{ background: "var(--surface-hover)", color: "var(--text-primary)" }}>
+              {files.map((f) => (
+                <span key={`${f.name}-${f.size}-${f.lastModified}`} className="badge-status" style={{ background: "var(--surface-hover)", color: "var(--text-primary)" }}>
                   {f.name}
                 </span>
               ))}

@@ -51,7 +51,7 @@ export default function Reports() {
               <YAxis tick={{ fontSize: 11, fill: "#8C8C8C" }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip contentStyle={{ background: "#FFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 }} />
               <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {stats.by_department.map((_, i) => <Cell key={i} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />)}
+                {stats.by_department.map((entry, i) => <Cell key={entry.department} fill={DEPT_COLORS[i % DEPT_COLORS.length]} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -70,8 +70,8 @@ export default function Reports() {
                 innerRadius={50}
                 paddingAngle={2}
               >
-                {stats.by_status.map((entry, i) => (
-                  <Cell key={i} fill={STATUS_COLORS[entry.status] || "#3A4B59"} />
+                {stats.by_status.map((entry) => (
+                  <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || "#3A4B59"} />
                 ))}
               </Pie>
               <Tooltip contentStyle={{ background: "#FFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 }} />
@@ -88,7 +88,7 @@ export default function Reports() {
               <YAxis dataKey="priority" type="category" tick={{ fontSize: 11, fill: "#595959" }} axisLine={false} tickLine={false} width={70} />
               <Tooltip contentStyle={{ background: "#FFF", border: "1px solid #E5E2DC", borderRadius: 6, fontSize: 12 }} />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                {stats.by_priority.map((entry, i) => <Cell key={i} fill={PRIO_COLORS[entry.priority] || "#3A4B59"} />)}
+                {stats.by_priority.map((entry) => <Cell key={entry.priority} fill={PRIO_COLORS[entry.priority] || "#3A4B59"} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
