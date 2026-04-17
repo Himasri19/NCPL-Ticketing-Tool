@@ -1,0 +1,109 @@
+{
+  "theme": "Light",
+  "archetype": "Archetype 4 (Swiss & High-Contrast) blended with Archetype 1 (Organic & Earthy)",
+  "aesthetic_rationale": "For this internal B2B consulting ticketing dashboard, we are rejecting generic SaaS 'purple/indigo' styles. Instead, we use 'Tactile Utility'—a serious, calm, information-dense aesthetic inspired by tools like Linear and Height. The palette relies on warm off-whites, bone, and deep graphite/muted blue to convey authority and efficiency, while structural layout relies on sharp, clean grids (Swiss principles).",
+  "colors": {
+    "background_app": "#FAF9F6",
+    "surface_sidebar": "#F2F0EA",
+    "surface_card": "#FFFFFF",
+    "surface_hover": "#EAE7E0",
+    "text_primary": "#1C1C1C",
+    "text_secondary": "#595959",
+    "text_tertiary": "#8C8C8C",
+    "border_subtle": "#E5E2DC",
+    "border_focus": "#3A4B59",
+    "brand_primary": "#3A4B59",
+    "brand_primary_hover": "#2C3A45",
+    "status": {
+      "urgent_overdue": "#D9534F",
+      "urgent_bg": "#FDF0EF",
+      "active_inprogress": "#4A90E2",
+      "active_bg": "#EEF5FB",
+      "resolved_closed": "#5CB85C",
+      "resolved_bg": "#F0F9F0",
+      "pending_unassigned": "#E6A23C",
+      "pending_bg": "#FDF6EC"
+    }
+  },
+  "typography": {
+    "instructions": "Avoid Inter/Roboto. We use a high-contrast pairing of a sharp, modern sans for headings and a sterile, highly legible sans for data.",
+    "fonts": {
+      "heading": "Cabinet Grotesk",
+      "body": "IBM Plex Sans",
+      "mono": "IBM Plex Mono"
+    },
+    "hierarchy": {
+      "h1_hero": "text-3xl md:text-4xl font-semibold tracking-tight text-[#1C1C1C]",
+      "h2_section": "text-xl md:text-2xl font-medium tracking-tight text-[#1C1C1C]",
+      "h3_card": "text-base md:text-lg font-medium text-[#1C1C1C]",
+      "body": "text-sm leading-relaxed text-[#595959]",
+      "table_data": "text-sm text-[#1C1C1C]",
+      "mono_label": "text-[11px] uppercase tracking-[0.1em] font-mono text-[#8C8C8C]"
+    }
+  },
+  "spacing_and_layout": {
+    "grid_system": "MODE B: THE 'CONTROL ROOM' GRID for the dashboard. High density. Base Grid: grid-cols-1 md:grid-cols-4 gap-6.",
+    "sidebar": "Fixed left sidebar, w-64, bg-[#F2F0EA], border-r border-[#E5E2DC]. Very dense navigation items, 4px vertical gap, 8px padding.",
+    "header": "Sticky top header. Glassmorphism: backdrop-blur-md bg-[#FAF9F6]/80. 1px bottom border border-[#E5E2DC]. Height: 64px.",
+    "content_area": "Generous spacing around main wrappers. p-6 md:p-8.",
+    "cards_and_panels": "Strict rectangular geometry. rounded-lg, flat bg-white, 1px border-[#E5E2DC], no soft drop shadows to maintain the brutalist/utility edge."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#3A4B59] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#2C3A45] transition-colors",
+      "secondary": "bg-white text-[#1C1C1C] border border-[#E5E2DC] rounded-md px-4 py-2 text-sm font-medium hover:bg-[#F2F0EA] transition-colors",
+      "danger": "bg-[#D9534F] text-white rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 transition-colors"
+    },
+    "badges": "rounded-full px-2.5 py-0.5 text-xs font-medium border-none. Use the status background and text colors defined in colors.status.",
+    "tables": "Dense layout. left-aligned headers. py-3 px-4 per cell. border-b border-[#E5E2DC]. Hover effect on rows: bg-[#FAF9F6].",
+    "inputs": "bg-white border-[#E5E2DC] rounded-md text-sm focus:ring-2 focus:ring-[#3A4B59]/20 focus:border-[#3A4B59].",
+    "ticket_detail_view": "Two-column layout. Left (70%): Conversation/Comments thread, rich text editor. Right (30%): Meta sidebar (Assignee, Status, Priority, Department) in a sticky card."
+  },
+  "motion_and_interactions": {
+    "hover": "Row highlights in tables, slight border darken on cards. Subtle scale-up on icons.",
+    "transitions": "transition-all duration-200 ease-in-out for buttons and inputs.",
+    "focus": "ring-2 ring-offset-1 ring-[#3A4B59]/30 outline-none."
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure text colors pass APCA over their respective backgrounds.",
+    "testing_attributes": "CRITICAL: All interactive elements (buttons, nav links, table rows, form inputs, tabs) MUST include data-testid. Use kebab-case and role-based naming (e.g., data-testid='create-ticket-button', data-testid='ticket-row-123')."
+  },
+  "icons_and_libraries": {
+    "icons": "Phosphor Icons (@phosphor-icons/react). Preferred for dense dashboards and developer tools. Use Duotone or Regular weights.",
+    "charts": "Recharts or Shadcn Charts for the Admin Reports (Tickets by department, trends).",
+    "installation_commands": [
+      "yarn add @phosphor-icons/react",
+      "yarn add recharts",
+      "yarn add date-fns"
+    ]
+  },
+  "media": {
+    "logos": {
+      "company_logo": {
+        "url": "https://images.pexels.com/photos/5477692/pexels-photo-5477692.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Minimalist ampersand logo symbol for the consulting firm branding (use in login and sidebar header)"
+      }
+    },
+    "backgrounds": {
+      "login_hero": {
+        "url": "https://images.unsplash.com/photo-1549890299-4ced92a8a11a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGFyY2hpdGVjdHVyYWwlMjBsaW5lc3xlbnwwfHx8fDE3NzY0MDQ2Njd8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Abstract architectural lines, use as a subtle side-panel background image on the login page (50% width split screen)"
+      }
+    },
+    "avatars": {
+      "employee_1": "https://images.unsplash.com/photo-1762522926157-bcc04bf0b10a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3NjQwNDY2N3ww&ixlib=rb-4.1.0&q=85",
+      "employee_2": "https://images.unsplash.com/photo-1769636929388-99eff95d3bf1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3NjQwNDY2N3ww&ixlib=rb-4.1.0&q=85",
+      "employee_3": "https://images.unsplash.com/photo-1576558656222-ba66febe3dec?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3NjQwNDY2N3ww&ixlib=rb-4.1.0&q=85",
+      "employee_4": "https://images.unsplash.com/photo-1655249493799-9cee4fe983bb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3NjQwNDY2N3ww&ixlib=rb-4.1.0&q=85"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Do NOT use 'Inter' or generic sans fonts. Apply 'Cabinet Grotesk' for headings and 'IBM Plex Sans' for body text globally.",
+    "Prioritize flat, distinct borders for cards and tables over soft blurred drop-shadows. The tool must look sharp and tactile.",
+    "Ensure the Dashboard uses the 'Control Room' dense grid approach for KPIs.",
+    "Implement a split-screen layout for the Login page: one side form with Google OAuth, one side the abstract architectural background image.",
+    "Use Phosphor icons consistently across the sidebar navigation and action buttons.",
+    "The admin dashboard must include recharts for data visualization (reports, trends).",
+    "Include 'data-testid' attributes on ALL actionable items. This is a strict requirement for automation."
+  ]
+}
